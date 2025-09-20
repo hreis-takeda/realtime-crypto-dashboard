@@ -22,7 +22,8 @@ export class StreamController {
       .ticks$()
       .pipe(
         map((t) => ({
-          data: JSON.stringify({ type: ServerEventType.TICK, data: t } as ServerEvent),
+          // Let Nest serialize the payload; don't pre-stringify or the client will receive a quoted string
+          data: { type: ServerEventType.TICK, data: t } as ServerEvent,
         }))
       );
   }
