@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.vscode/
+.env
+*.log
+coverage/
+.idea/
+.DS_Store
+packages/backend/data/
+!packages/backend/data/.gitkeep

@@ -1,0 +1,21 @@
+{
+  "name": "realtime-crypto-dashboard",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.10.0",
+  "engines": {
+    "node": ">=18.18.0",
+    "pnpm": ">=9.10.0"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm -r --stream --parallel dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format",
+    "test": "pnpm -r test"
+  }
+}
