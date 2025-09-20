@@ -1,7 +1,7 @@
-import { Controller, Get, Sse } from "@nestjs/common";
-import { map, Observable } from "rxjs";
+import { Controller, Get, Sse, MessageEvent } from "@nestjs/common";
+import { map, Observable, interval, merge, timer } from "rxjs";
 import type { ServerEvent } from "@app/shared";
-import { ServerEventType } from "@app/shared";
+import { ServerEventType, ConnectionStateEnum } from "@app/shared";
 import { FinnhubService } from "./ticks/finnhub.service";
 import { AggregatorService } from "./rates/aggregator.service";
 
@@ -17,14 +17,13 @@ export class StreamController {
   }
 
   @Sse("events")
-  events(): Observable<any> {
-    return this.finnhub
-      .ticks$()
-      .pipe(
-        map((t) => ({
-          // Let Nest serialize the payload; don't pre-stringify or the client will receive a quoted string
-          data: { type: ServerEventType.TICK, data: t } as ServerEvent,
-        }))
-      );
+  events(): Observable<MessageEvent> {
+    const ticks$ = this.finnhub.ticks$().pipe(
+      map((t) => ({ data: { type: ServerEventType.TICK, data: t } as ServerEvent }))
+    );
+    const keepalive$ = timer(0, 3_000).pipe(
+      map(() => ({ data: { type: ServerEventType.STATUS, data: { state: ConnectionStateEnum.CONNECTED } } as ServerEvent }))
+    );
+    return merge(keepalive$, ticks$);
   }
 }

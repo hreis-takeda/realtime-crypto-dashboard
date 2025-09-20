@@ -33,11 +33,15 @@ export class FinnhubService implements OnModuleInit {
     // Start connection when the module initializes
     if (!this.started) {
       this.started = true;
-      const token = process.env.FINNHUB_API_KEY;
-      if (!token) {
+      const forceMock = this.truthy(process.env.FINNHUB_USE_MOCK);
+      const raw = process.env.FINNHUB_API_KEY ?? "";
+      const token = this.normalizeToken(raw);
+      if (forceMock || !token) {
+        console.log(`[finnhub] using mock stream${forceMock ? " (forced)" : token ? " (blank token)" : ""}`);
         // Fallback to mock ticks to keep the app usable without a key
         this.startMockStream();
       } else {
+        console.log(`[finnhub] connecting with token: ${token.slice(0, 4)}… (length ${token.length})`);
         this.connect(token);
       }
     }
@@ -91,6 +95,7 @@ export class FinnhubService implements OnModuleInit {
         this.ws = null;
         const delay = this.backoffMs;
         this.backoffMs = Math.min(this.backoffMs * 2, this.maxBackoffMs);
+        console.warn(`[finnhub] ws closed/error; reconnecting in ${delay}ms`);
         setTimeout(() => this.connect(token), delay);
       };
 
@@ -100,7 +105,42 @@ export class FinnhubService implements OnModuleInit {
       // If immediate failure, try again with backoff
       const delay = this.backoffMs;
       this.backoffMs = Math.min(this.backoffMs * 2, this.maxBackoffMs);
+      console.warn(`[finnhub] immediate connect failure; retrying in ${delay}ms`);
       setTimeout(() => this.connect(token), delay);
     }
+  }
+
+  private normalizeToken(raw: string): string {
+    const trimmed = raw.trim();
+    // Strip surrounding single/double quotes
+    const unquoted = trimmed.replace(/^['"](.*)['"]$/s, "$1");
+    if (!unquoted) return "";
+    const lower = unquoted.toLowerCase();
+    // Treat common placeholders or suspicious tokens as empty
+    const looksPlaceholder = [
+      "replace",
+      "change",
+      "your",
+      "insert",
+      "paste",
+      "todo",
+      "dummy",
+      "sample",
+      "example",
+      "test",
+      "xxx",
+      "apikey",
+      "api_key",
+    ].some((s) => lower.includes(s));
+    if (looksPlaceholder) return "";
+    // Extremely short token is likely invalid
+    if (unquoted.length < 10) return "";
+    return unquoted;
+  }
+
+  private truthy(v: string | undefined): boolean {
+    if (!v) return false;
+    const s = v.trim().toLowerCase();
+    return s === "1" || s === "true" || s === "yes" || s === "on";
   }
 }
