@@ -9,7 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo 'no lint yet'",
     "format": "echo 'format ok'",
-    "dev": "echo shared:dev"
+    "dev": "tsc -w -p tsconfig.build.json"
   },
   "devDependencies": {
     "typescript": "^5.5.4"

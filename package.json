@@ -11,6 +11,7 @@
     "packages/*"
   ],
   "scripts": {
+    "predev": "pnpm -r --filter @app/shared build",
     "dev": "pnpm -r --stream --parallel dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
